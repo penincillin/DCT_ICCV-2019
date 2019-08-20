@@ -1,0 +1,17 @@
+*.swp
+*.jpg
+*.png
+tmp/
+pretrained_models/
+.vscode/
+test_result/
+log/
+log.txt
+checkpoints/
+checkpoints
+evaluate_results/
+*.pyc
+*.npy
+test_log.txt
+test_log*
+DCT_data/

@@ -1,0 +1,4 @@
+opencv-python
+visdom
+dominate
+deepdish
