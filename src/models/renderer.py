@@ -457,6 +457,36 @@ def draw_text(input_image, content):
         image = image.astype(np.float32) / 255.
     return image
 
+def draw_keypoints(image, kps, kps_weight, color, img_size):
+    image = (image+1)*0.5 * img_size
+    kps = (kps+1)*0.5 * img_size
+    image = image.astype(np.uint8)
+    im = Image.fromarray(image[:,:,::-1])
+    draw = ImageDraw.Draw(im)
+    for i in range(kps.shape[0]):
+        x, y  = kps[i]
+        v = kps_weight[i][0]
+        if v > 0:
+            draw.ellipse((x-2,y-2,x+2,y+2), fill=color)
+    del draw
+    #im.save(img_path)
+    return np.asarray(im)
+
+def draw_dp_anno(image, dp_kps, dp_kps_weight, color, img_size):
+    image = (image+1)*0.5 * img_size
+    dp_kps = (dp_kps+1)*0.5 * img_size
+    image = image.astype(np.uint8)
+    im = Image.fromarray(image[:,:,::-1])
+    draw = ImageDraw.Draw(im)
+    for i in range(dp_kps.shape[0]):
+        x, y = dp_kps[i] 
+        v = dp_kps_weight[i][0]
+        if v > 0:
+            draw.ellipse((x-1,y-1,x+1,y+1), fill=color)
+    del draw
+    #im.save(img_path)
+    return np.asarray(im)
+
 
 if __name__ == '__main__':
 

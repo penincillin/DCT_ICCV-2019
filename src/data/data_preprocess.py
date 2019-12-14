@@ -11,10 +11,14 @@ from datetime import datetime
 import numpy as np
 import torchvision.transforms as transforms
 import torch
-from data.base_dataset import BaseDataset
+from PIL import Image
+from scipy import misc
 import cv2
 import matplotlib.pyplot as plt
 import pickle
+import util.parallel_io as pio
+import util.ry_utils as ry_utils
+from PIL import Image, ImageDraw
 
 
 class DataProcessor(object):
@@ -22,24 +26,54 @@ class DataProcessor(object):
     def __init__(self, opt):
         self.opt = opt
         self.dp_num_max = opt.dp_num_max
+        self.iuv2seg_map = {
+            0: 0,
+            1: 1,
+            2: 1,
+            3: 2,
+            4: 3,
+            5: 4,
+            6: 5,
+            7: 6,
+            9: 6,
+            8: 7,
+            10: 7,
+            11: 8,
+            13: 8,
+            12: 9,
+            14: 9,
+            15: 10,
+            17: 10,
+            16: 11,
+            18: 11,
+            19: 12,
+            21: 12,
+            20: 13,
+            22: 13,
+            23: 14,
+            24: 14
+        }
 
 
-    def padding_and_resize(self, img, kps, IUV=None, dp_kps=None):
+    def padding_and_resize(self, img, kps=None, IUV=None, dp_kps=None):
         height, width = img.shape[:2]
-
         new_len = np.max([height, width])
-        delta_x = (new_len-width)//2
-        delta_y = (new_len-height)//2
-        delta = np.array([delta_x, delta_y, 0]).reshape(1, 3)
 
-        new_kps = np.copy(kps)
-        # add shift
-        new_kps += np.repeat(delta, new_kps.shape[0], axis=0)
-        kps_weight = np.ones(kps.shape[0])
-        kps_weight[kps[:, 2] == 0] = 0
-        visible_ky_num = np.count_nonzero(kps_weight[:-1])
-        kps_weight *= (kps.shape[0] / visible_ky_num)
-        kps_weight = np.stack([kps_weight, kps_weight], axis=1)
+        if kps is not None:
+            delta_x = (new_len-width)//2
+            delta_y = (new_len-height)//2
+            delta = np.array([delta_x, delta_y, 0]).reshape(1, 3)
+            new_kps = np.copy(kps)
+            # add shift
+            new_kps += np.repeat(delta, new_kps.shape[0], axis=0)
+            kps_weight = np.ones(kps.shape[0])
+            kps_weight[kps[:, 2] == 0] = 0
+            visible_ky_num = np.count_nonzero(kps_weight[:-1])
+            kps_weight *= (kps.shape[0] / visible_ky_num)
+            kps_weight = np.stack([kps_weight, kps_weight], axis=1)
+        else:
+            new_kps = None
+            kps_weight = None
 
         if dp_kps is not None:
             new_dp_kps = np.zeros((self.dp_num_max, 2))
@@ -54,12 +88,11 @@ class DataProcessor(object):
             new_dp_kps = None
             dp_kps_weight = None
 
-        # resize
+        # resize image and IUV
         new_img = np.zeros((new_len, new_len, 3), dtype=np.uint8)
         new_IUV = np.zeros((new_len, new_len, 3), dtype=np.uint8)
         if IUV is None:
             IUV = np.zeros(img.shape)
-
         if height > width:
             margin = (height-width)//2
             new_img[:, margin:margin+width, :] = img
@@ -71,25 +104,25 @@ class DataProcessor(object):
         else:
             new_img[:, :, :] = img
             new_IUV[:, :, :] = IUV
-
-
         finalSize = self.opt.inputSize
-        x_scale = finalSize/new_len
-        y_scale = finalSize/new_len
         new_img = cv2.resize(new_img, (finalSize, finalSize))
         new_IUV = cv2.resize(
             new_IUV, (finalSize, finalSize), interpolation=cv2.INTER_NEAREST)
 
-        scale_ratio = np.array([x_scale, y_scale, 1]).reshape(1, 3)
-        new_kps *= np.repeat(scale_ratio, new_kps.shape[0], axis=0)
-        # remove the visibilty
-        new_kps = new_kps[:, :2]
-
+        # resize 2D keypoints and dense keypoints
+        if new_kps is not None:
+            x_scale = finalSize/new_len
+            y_scale = finalSize/new_len
+            scale_ratio = np.array([x_scale, y_scale, 1]).reshape(1, 3)
+            new_kps *= np.repeat(scale_ratio, new_kps.shape[0], axis=0)
+            # remove the visibilty
+            new_kps = new_kps[:, :2]
         if new_dp_kps is not None:
             new_dp_kps *= np.repeat(scale_ratio[:, :2],
                                     new_dp_kps.shape[0], axis=0)
 
         return new_img, new_kps, kps_weight, new_IUV, new_dp_kps, dp_kps_weight
+
 
     def flip_IUV(self, IUV):
         flipped_IUV = np.zeros(IUV.shape, dtype=np.uint8)
@@ -240,30 +273,10 @@ class DataProcessor(object):
         return new_kps, new_dp_kps
 
 
-
     def transform_IUV(self, IUV):
         IUV_tensor = torch.from_numpy(IUV).float()
         IUV_tensor = IUV_tensor.permute(2, 0, 1)
-
         IUV_tensor[0] = (IUV_tensor[0]/24 - 0.5) * 2
         IUV_tensor[1] = (IUV_tensor[1]/255 - 0.5) * 2
         IUV_tensor[2] = (IUV_tensor[2]/255 - 0.5) * 2
         return IUV_tensor
-    
-
-    def refine_dp_kps(self, IUV, dp_kps, dp_kps_weight):
-        height, width = IUV.shape[:2]
-        num_valid = 0
-        for i, (x, y) in enumerate(dp_kps):
-            x, y = int(x), int(y)
-            x = min(max(x, 0), width-1)
-            y = min(max(y, 0), height-1)
-            if IUV[y, x, 0] > 0:
-                num_valid += 1
-            else:
-                dp_kps_weight[i] = 0.0
-        if num_valid > 0:
-            dp_kps_weight *= (1.0 * dp_kps.shape[0] / num_valid)
-        else:
-            dp_kps_weight *= 0.0
-        return dp_kps_weight

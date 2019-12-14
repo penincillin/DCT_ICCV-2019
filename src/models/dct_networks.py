@@ -43,8 +43,6 @@ def get_model(arch):
     if hasattr(resnet, arch):
         network = getattr(resnet, arch)
         return network(pretrained=True, num_classes=512)
-    else:
-        raise ValueError("Invalid Backbone Architecture")
 
 
 class DCTEncoder(nn.Module):

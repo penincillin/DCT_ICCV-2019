@@ -11,46 +11,28 @@ from datetime import datetime
 import numpy as np
 import torchvision.transforms as transforms
 import torch
-from data.base_dataset import BaseDataset
 from PIL import Image
 from scipy import misc
 import cv2
 import pickle
-from data.human36m_dataset import Human36MDataset
-from data.coco_dataset import COCODataset
-from data.up3d_dataset import UP3DDataset
+import util.parallel_io as pio
+import util.ry_utils as ry_utils
+from data.infer_dataset import InferDataset
 import numpy as np
+import torch.utils.data as data
 
 
-class ComposeDataset(BaseDataset):
+class ComposeDataset(data.Dataset):
 
     def __init__(self, opt):
         self.opt = opt
         candidate_datasets = list()
 
-        # coco dataset
-        if opt.isTrain and opt.train_coco:
-            coco_dataset = COCODataset(opt)
-            candidate_datasets.append(coco_dataset)
+        if not self.opt.isTrain:
+            infer_dataset = InferDataset(opt)
+            candidate_datasets.append(infer_dataset)
 
-        # up3d dataset
-        if (opt.isTrain and opt.train_up3d ) or \
-             (not opt.isTrain and opt.test_dataset == 'up3d'):
-            up3d_dataset = UP3DDataset(opt)
-            candidate_datasets.append(up3d_dataset)
-
-        # human36m dataset
-        if opt.isTrain:
-            # by default, the number of human3.6M data used in training is set to be
-            # # same as the sum of number of other datasets
-            h36m_data_num = int(np.sum([len(dataset) for dataset in candidate_datasets]))
-            human36m_dataset = Human36MDataset(opt, h36m_data_num)
-            candidate_datasets.append(human36m_dataset)
-        
         assert(len(candidate_datasets)>0)
-        if opt.process_rank <= 0 and opt.isTrain:
-            for dataset in candidate_datasets:
-                print('{} dataset has {} data'.format(dataset.name, len(dataset)))
 
         self.all_datasets = list()
         for dataset in candidate_datasets:
@@ -58,7 +40,6 @@ class ComposeDataset(BaseDataset):
                 self.all_datasets.append(dataset)
         self.index_map = self.get_index_map()
         self.size_dict = self.get_size_dict()
-
 
     def get_size_dict(self):
         size_dict = dict()
@@ -114,11 +95,9 @@ class ComposeDataset(BaseDataset):
         res_data = self.complete_data(data)
         return res_data
 
-
     def shuffle_data(self):
         for dataset in self.all_datasets:
             random.shuffle(dataset.data_list)
-
 
     def __len__(self):
         total_data_num = sum([len(dataset) for dataset in self.all_datasets])
