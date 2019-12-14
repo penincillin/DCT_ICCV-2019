@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import data.data_utils as data_utils
 import cv2
 import numpy as np
 import sys
@@ -23,16 +22,6 @@ def pad_and_resize(img, final_size=224):
         new_img[:, :, :] = img
     new_img = cv2.resize(new_img, (final_size, final_size))
     return new_img
-
-
-def get_img_path(data):
-    if 'image_path' in data:
-        return data['image_path']
-    elif 'crop_img_path' in data:
-        return data['crop_img_path']
-    else:
-        print("Unsupported data format")
-        sys.exit(0)
 
 
 def get_subdir(img_path):

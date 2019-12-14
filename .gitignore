@@ -10,8 +10,11 @@ log.txt
 checkpoints/
 checkpoints
 evaluate_results/
+inference_results/
 *.pyc
 *.npy
 test_log.txt
 test_log*
-DCT_data/
+dct_data/
+dct_data
+dct_data.zip

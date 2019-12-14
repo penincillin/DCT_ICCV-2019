@@ -12,10 +12,9 @@ import numpy
 import random
 from options.test_options import TestOptions
 from data.data_loader import CreateDataLoader
-from models.dct_infer_model import DCTModel
+from models.dct_model import DCTModel
 from util.visualizer import Visualizer
 from util.evaluator import Evaluator
-import data.data_utils as data_utils
 import cv2
 import numpy as np
 import util.ry_utils as ry_utils
@@ -37,8 +36,7 @@ class Timer(object):
         sys.stdout.flush()
 
 
-if __name__ == '__main__':
-
+def main():
     opt = TestOptions().parse()
     opt.serial_batches = True  # no shuffle
     opt.no_flip = True  # no flip
@@ -49,31 +47,41 @@ if __name__ == '__main__':
     dataset = data_loader.load_data()
     assert(len(dataset.dataset.all_datasets) == 1)
     test_dataset = dataset.dataset.all_datasets[0]
-    evaluator = Evaluator(test_dataset.data_list)
+    evaluator = Evaluator(test_dataset.data_list, opt.model_root)
 
-    test_res_dir = opt.eval_res_dir
+    test_res_dir = 'evaluate_results'
     ry_utils.renew_dir(test_res_dir)
-    
+
+    epoch = 'latest'
     evaluator.clear()
+    opt.which_epoch = str(epoch)
     model = DCTModel(opt)
     model.eval()
-
-    res_pkl_file = osp.join(test_res_dir, 'eval_result.pkl')
-    test_img_dir = osp.join(test_res_dir, 'images')
-    os.makedirs(test_img_dir)
 
     timer = Timer(len(dataset))
     for i, data in enumerate(dataset):
         model.set_input(data)
         model.test()
+        losses = model.compute_loss()
         pred_res = model.get_pred_result()
         data_idxs = data['index'].numpy()
-        evaluator.update(data_idxs, pred_res)
+        evaluator.update(data_idxs, losses, pred_res)
         timer.click(i)
 
     evaluator.remove_redunc()
-    evaluator.save_to_pkl(res_pkl_file)
 
-    print("Inference Complete")
+    res_pkl_file = osp.join(test_res_dir, 'estimator_{}.pkl'.format(epoch))
+    evaluator.save_to_pkl(res_pkl_file)
+    backup_pkl_file = osp.join(test_res_dir, 'estimator.pkl')
+    shutil.copy2(res_pkl_file, backup_pkl_file)
+
+    print("Test of epoch: {} complete".format(epoch))
+    print("PVE:{}".format(evaluator.pve))
+    print("MPJPE:{}".format(evaluator.mpjpe))
+    print("PVE-TPose:{}".format(evaluator.pve_tpose))
+    print('------------------')
     sys.stdout.flush()
-    # evaluator.visualize_result(test_img_dir)
+
+
+if __name__ == '__main__':
+    main()

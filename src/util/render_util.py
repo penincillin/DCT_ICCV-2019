@@ -13,7 +13,7 @@ import multiprocessing as mp
 from opendr.renderer import ColoredRenderer
 from opendr.lighting import LambertianPointLight
 from opendr.camera import ProjectPoints
-from smpl_webuser.serialization import load_model
+
 
 
 def render_smpl(m):
@@ -47,7 +47,8 @@ def render_image_single(smpl, smpl_pose, smpl_shape):
     return render_img
 
 
-def render_image(smpl_pose, smpl_shape, smpl):
+def render_image(smpl, smpl_pose, smpl_shape):
+    # original image
     all_imgs = list()
     for i in range(1, 4):
         smpl_pose[0] = 0

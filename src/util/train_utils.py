@@ -35,11 +35,9 @@ class LossStat(object):
         self.joints2d_losses = AverageMeter()
         self.dp_align_losses = AverageMeter()
         self.joints3d_losses = AverageMeter()
-        self.smpl_joints_losses = AverageMeter()
         self.smpl_params_losses = AverageMeter()
         self.num_data = num_data
         self.has_dp_loss = False
-        self.has_smpl_joints_loss = False
         self.has_smpl_param_loss = False
     
     def set_epoch(self, epoch):
@@ -51,9 +49,6 @@ class LossStat(object):
         if 'dp_align_loss' in errors:
             self.dp_align_losses.update(errors['dp_align_loss'])
             self.has_dp_loss = True
-        if 'smpl_joints_loss' in errors:
-            self.smpl_joints_losses.update(errors['smpl_joints_loss'])
-            self.has_smpl_joints_loss = True
         if 'smpl_params_loss' in errors:
             self.smpl_params_losses.update(errors['smpl_params_loss'])
             self.has_smpl_param_loss = True
@@ -71,17 +66,9 @@ class LossStat(object):
             print_content = print_content.format(self.epoch, epoch_iter, self.num_data,
                                                 dp_align_loss = self.dp_align_losses)
 
-        if self.has_smpl_joints_loss:
-            print_content += '\nEpoch:[{}][{}/{}]\t' + \
-                'SMPL joints Loss {joints3d_loss.val:.4f}({joints3d_loss.avg:.4f})\t'
-            print_content = print_content.format( self.epoch, epoch_iter, self.num_data,
-                    joints3d_loss = self.smpl_joints_losses)
-
         if self.has_smpl_param_loss:
-            print_content += '\nEpoch:[{}][{}/{}]\t' + \
-                'SMPL Params Loss {smpl_params_loss.val:.4f}({smpl_params_loss.avg:.4f})\t'
-            print_content = print_content.format(self.epoch, epoch_iter, self.num_data,
-                    smpl_params_loss = self.smpl_params_losses)
+            print_content += 'SMPL Params Loss {smpl_params_loss.val:.4f}({smpl_params_loss.avg:.4f})\t'
+            print_content = print_content.format(smpl_params_loss = self.smpl_params_losses)
         print(print_content)
 
 
