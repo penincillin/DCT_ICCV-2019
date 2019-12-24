@@ -2,7 +2,7 @@
 - Linux
 - Python 3 (I strong recommend to use [Anaconda](https://anaconda.org/) to set-up your Python environment and build a new conda virtual environment for this project.)
 - CUDA==9.0 and CuDNN==6.0
-- Pytorch=1.0.0 and latest version of torchvision (currently, higher version of Pytorch is not supported)
+- Pytorch=1.0.0 and latest version of torchvision (**Currently, higher version of Pytorch is not supported.**)
 - Other required 3rd-party packages is listed in [requirements.txt.](requirements.txt)
 - If you want to visualize the generated 3D human model, please refer to the following section.
 
