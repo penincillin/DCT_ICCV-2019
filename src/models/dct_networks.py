@@ -1,12 +1,11 @@
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
 import torch
 import torch.nn as nn
 from torch.nn import init
 import functools
-from torch.autograd import Variable
 import numpy as np
 from . import resnet
 

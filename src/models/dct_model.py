@@ -116,9 +116,6 @@ class DCTModel(BaseModel):
         self.smpl_model_path = osp.join(
             opt.model_root, opt.smpl_model_file)
         self.smpl = SMPL(self.smpl_model_path, self.batchSize).cuda()
-        if opt.dist:
-            self.smpl = DistributedDataParallel(
-                self.smpl, device_ids=[torch.cuda.current_device()])
 
         # set encoder and optimizer
         self.encoder = dct_networks.DCTEncoder(opt).cuda()

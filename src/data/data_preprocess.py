@@ -13,7 +13,6 @@ import torchvision.transforms as transforms
 import torch
 from data.base_dataset import BaseDataset
 import cv2
-import matplotlib.pyplot as plt
 import pickle
 
 
