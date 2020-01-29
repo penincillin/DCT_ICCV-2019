@@ -222,7 +222,7 @@ def render_model(verts,
     if color_id is None:
         color = colors['light_blue']
     else:
-        color_list = colors.values()
+        color_list = list(colors.values())
         color = color_list[color_id % len(color_list)]
 
     imtmp = simple_renderer(rn, verts, faces, color=color)
@@ -458,8 +458,9 @@ def draw_text(input_image, content):
     return image
 
 
+'''
 if __name__ == '__main__':
-
+    
     inputSize = int(sys.argv[1])
     smpl_face_path = sys.argv[2]
 
@@ -471,3 +472,4 @@ if __name__ == '__main__':
 
     rend_img = renderer(vert, cam, img)
     np.save('.rend_img.npy', rend_img)
+'''

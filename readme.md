@@ -24,7 +24,7 @@ Download processed datasets, demo images and pretrained weights and models from 
 
 ## Training
 ### Prepare Real-time Visualization
-Before training starts, to visualize the training results and the loss curve, please run ```python -m visdom.server 8097``` and click the URL [http://localhost:8097](http://localhost:8097)
+Before training starts, to visualize the training results and the loss curve in real-time, please run ```python -m visdom.server 8097``` and click the URL [http://localhost:8097](http://localhost:8097)
 
 ### Train All Dataset 
 #### Use Image as input and use all annotations

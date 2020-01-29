@@ -6,17 +6,11 @@ import numpy as np
 import cv2
 from PIL import Image, ImageDraw
 import subprocess as sp
+from models.renderer import SMPLRenderer
 
 def render_image(vert, cam, img, inputSize, smpl_face_path):
-
-    np.save('.vert.npy', vert)
-    np.save('.cam.npy', cam)
-    np.save('.img.npy', img)
-
-    commands = ['python2', 'src/models/renderer.py', str(inputSize), smpl_face_path]
-    sp.run(commands)
-
-    rend_img = np.load('.rend_img.npy')
+    renderer = SMPLRenderer(img_size=inputSize, face_path=smpl_face_path)
+    rend_img = renderer(vert, cam, img)
     return rend_img
 
 

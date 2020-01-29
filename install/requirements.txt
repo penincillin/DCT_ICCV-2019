@@ -2,3 +2,4 @@ opencv-python
 visdom
 dominate
 deepdish
+opendr
