@@ -23,7 +23,7 @@ from . import dct_networks
 from .smpl import SMPL, batch_orth_proj_idrot, batch_rodrigues
 from .loss_utils import LossUtil
 import time
-from . import vis_util
+from util import vis_util
 
 
 class DCTModel(BaseModel):
@@ -410,33 +410,20 @@ class DCTModel(BaseModel):
         tz = f / cam[0]
         cam_for_render = 0.5 * self.inputSize * np.array([f, 1, 1])
         cam_t = np.array([cam[1], cam[2], tz])
-        # Undo pre-processing.
-        input_img = (img + 1) * 0.5
-        # rend_img = self.renderer(vert + cam_t, cam_for_render, img=input_img)
         rend_img = vis_util.render_image(
-            vert+cam_t, cam_for_render, input_img, self.opt.inputSize, self.smpl_face_path)
+            vert+cam_t, cam_for_render, img, self.opt.inputSize, self.smpl_face_path)
         return rend_img
 
 
     def get_current_visuals(self, idx=0):
         # visualize image and IUV first
         img = self.input_img[idx].cpu().detach().numpy()
-        img = np.transpose(img, (1, 2, 0))
-        show_img = (img+1)*0.5*255
-        show_img = show_img.astype(np.uint8)
-        show_img = show_img[:, :, (2, 1, 0)]
+        show_img = vis_util.recover_img(img)[:,:,::-1]
         IUV = self.input_IUV[idx].cpu().detach().numpy()
-        IUV = np.transpose(IUV, (1, 2, 0))
-        IUV[:, :, 0] = (IUV[:, :, 0]+1)*0.5 * 24
-        IUV[:, :, 1:] = (IUV[:, :, 1:]+1)*0.5 * 255
-        IUV = IUV[:, :, (2, 1, 0)].astype(np.uint8)
+        IUV = vis_util.recover_IUV(IUV)
         visual_dict = OrderedDict([('img', show_img), ('IUV', IUV)])
 
-        # visualize image with 2D joints and rendered SMPL
-        if not self.opt.isTrain and self.has_smpl_param_loss:
-            vert = self.pred_verts_vis[idx].cpu().detach().numpy()
-        else:
-            vert = self.pred_verts_3d[idx].cpu().detach().numpy()
+        # visualize keypoint
         kp = self.keypoints[idx].cpu().detach().numpy()
         pred_kp = self.pred_kp_2d[idx].cpu().detach().numpy()
         kp_weight = self.keypoints_weights[idx].cpu().detach().numpy()
@@ -444,9 +431,14 @@ class DCTModel(BaseModel):
             img, kp, kp_weight, 'red', self.inputSize)
         pred_kp_img = vis_util.draw_keypoints(
             img, pred_kp, kp_weight, 'green', self.inputSize)
+
+        # visualize image with 2D joints and rendered SMPL
+        if not self.opt.isTrain and self.has_smpl_param_loss:
+            vert = self.pred_verts_vis[idx].cpu().detach().numpy()
+        else:
+            vert = self.pred_verts_3d[idx].cpu().detach().numpy()
         cam = self.pred_cam_params[idx].cpu().detach().numpy()
         rend_img = self.rend_img(img, vert, cam)
-        rend_img = rend_img.astype(np.uint8)
         rend_img = rend_img[:, :, ::-1]
         visual_dict['rend_img'] = rend_img
         visual_dict['gt_keypoint'] = kp_img

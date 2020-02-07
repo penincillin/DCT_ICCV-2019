@@ -36,7 +36,7 @@ class DataProcessor(object):
         new_kps += np.repeat(delta, new_kps.shape[0], axis=0)
         kps_weight = np.ones(kps.shape[0])
         kps_weight[kps[:, 2] == 0] = 0
-        visible_ky_num = np.count_nonzero(kps_weight[:-1])
+        visible_ky_num = np.count_nonzero(kps_weight)
         kps_weight *= (kps.shape[0] / visible_ky_num)
         kps_weight = np.stack([kps_weight, kps_weight], axis=1)
 

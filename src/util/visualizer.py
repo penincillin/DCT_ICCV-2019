@@ -19,7 +19,8 @@ class Visualizer():
         self.name = opt.name
         if self.display_id > 0:
             import visdom
-            # self.vis = visdom.Visdom(server="IP Address of your server", port = opt.display_port)
+            self.vis = visdom.Visdom(server="100.97.72.101", port = opt.display_port)
+            # self.vis = visdom.Visdom(server="100.96.161.35", port = opt.display_port)
             self.display_single_pane_ncols = opt.display_single_pane_ncols
 
         if self.use_html:
@@ -52,6 +53,7 @@ class Visualizer():
                 idx = 0
                 for label, image_numpy in visuals.items():
                     label_html_row += '<td>%s</td>' % label
+                    # print(label, type(image_numpy))
                     images.append(image_numpy.transpose([2, 0, 1]))
                     idx += 1
                     if idx % ncols == 0:
