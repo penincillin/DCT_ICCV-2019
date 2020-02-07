@@ -50,7 +50,7 @@ def recover_IUV(IUV):
     return IUV[:,:,::-1].astype(np.uint8)
 
 
-def recover_keypoint(kps, kps_weight, img_size):
+def recover_keypoint(kps, kps_weight, img_size, resize=True):
     # normalize format
     if isinstance(kps, torch.Tensor):
         if kps.device.type == 'cuda':
@@ -62,7 +62,7 @@ def recover_keypoint(kps, kps_weight, img_size):
     else:
         assert isinstance(kps, np.ndarray)
     # recover keypoint
-    if np.max(kps) < 1.5:
+    if resize:
         kps = (kps+1)*0.5 * img_size
     # return
     return kps, kps_weight
