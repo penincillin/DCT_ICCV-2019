@@ -4,7 +4,7 @@ Yu Rong, Ziwei Liu, Cheng Li, Kaidi Cao, Chen Change Loy
 - [paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Rong_Delving_Deep_Into_Hybrid_Annotations_for_3D_Human_Recovery_in_ICCV_2019_paper.pdf).  
 - [Project Page](https://penincillin.github.io/dct_iccv2019)  
 </br></br>
-![Teaser Image](https://penincillin.github.io/dct_iccv2019/framework.png)  
+![Teaser Image](https://penincillin.github.io/project/dct_iccv2019/framework.png)  
 
 Part of the code is inspired by [Pytorch-CycleGAN](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) and [HMR](https://github.com/akanazawa/hmr). Thanks the contributions of their authors.
 
